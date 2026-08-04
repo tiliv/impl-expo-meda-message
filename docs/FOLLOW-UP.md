@@ -46,3 +46,28 @@ rather than rediscovering it: an envelope carrying more than ten attachments
 cannot be fully unsent, because `RevokeRoomMessageRequest.mediaIds` is
 `maxItems: 10`. The composer treats that as its attachment cap and offers
 `split` as the interesting alternative.
+
+---
+
+## Open, as of the composer being built
+
+`impl-expo-message-composer` now exists and defines the format this repo
+renders. Concretely, `src/core/packing.ts` there emits:
+
+| Attachments | msgtype |
+| --- | --- |
+| 0 | `m.text` |
+| 1 | `m.file` + `app.envelope.media_id` |
+| 2+ | `app.envelope.multi` + `app.envelope.items[]` with explicit `order`, plus a named `app.envelope.cover` |
+
+**The shared fixtures are now the outstanding work, and they got more urgent
+rather than less.** Until both repos read the same files, the format is defined
+by whichever side was written last — which is currently the composer, by
+accident rather than by agreement.
+
+Minimum coverage: no attachments; one; ten mixed; a caption with no
+attachments; a voice memo among photos; eleven (the unrevocable case); and one
+envelope carrying a field this repo does not understand, to pin down
+forward-compatibility.
+
+Copied into both repos, not extracted into a package.
