@@ -105,3 +105,28 @@ single-view session is a real destruction trigger and needs to survive the port.
    you the items it just destroyed. The alternative — consume and show nothing —
    is defensible and arguably more honest, and is a one-line change to
    `renderableNow()`.
+
+---
+
+## The wire, added later
+
+`core/envelope.ts` + `core/packing.ts` now carry the multi-item model to and from a
+real room event. Findings, worst-to-find-late first:
+
+1. **Ten attachments is the revocation ceiling.** `maxItems: 10` on
+   `RevokeRoomMessageRequest.mediaIds`. Beyond it, media outlives the message that
+   carried it. This is a product decision disguised as a schema detail.
+2. **There is no Matrix precedent for a multi-item message.** Ours is
+   `app.envelope.multi`; nothing else will read it. The fallback `body` is the
+   entire interop story, and it must not name files.
+3. **Single view is two mechanisms, not one.** Client walk plus server `viewOnce`.
+   Shipping one without the other produces a guarantee that a reinstall breaks.
+4. **The mediaId should be the item id.** The single-view walk keys off item ids;
+   locally-generated ones make "already viewed" forget itself on every fresh
+   install.
+5. **One malformed item must not discard the envelope.** Nine photos and a broken
+   tenth should render nine — and `itemLossOf()` exists so the UI can disclose the
+   gap instead of presenting eight of ten as complete.
+
+Still open: not round-tripped against a live deployment, and the `overflow`
+question is unanswered by design.

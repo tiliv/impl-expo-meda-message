@@ -165,3 +165,53 @@ See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
   `src/adapters/index.ts`.
 - No upload, no progress, no failed-item state. A real media message needs a
   per-item send state and this does not model one.
+
+---
+
+## The wire boundary, and the ceiling it puts on this feature
+
+`src/core/envelope.ts` (byte-identical across the `impl-expo-*` repos) and
+`src/core/packing.ts` connect this experiment to the shape the Noodles API actually
+moves. Derived from `noodles-model/openapi`, not invented.
+
+### Matrix has no "several things in one message"
+
+`m.room.message` carries exactly one `msgtype` and one body. Every multi-image
+message you have seen in a Matrix client is N separate events grouped by the
+renderer. That is a legitimate design and it is **not** this one: "one envelope
+holding several pieces of mixed media" means one event, because N events can
+partially fail, be partially revoked, and arrive interleaved with someone else's
+message.
+
+So the content shape is ours — `msgtype: 'app.envelope.multi'` with an `items`
+array, each item carrying the `msgtype` it would have had as its own event. Cost:
+no other client will render it, and the fallback `body` is all an unaware reader
+sees. It is a count, not a filename list, because filenames leak content the
+envelope's retention is supposed to govern.
+
+### Ten attachments is a hard ceiling
+
+`RevokeRoomMessageRequest.mediaIds` is **`maxItems: 10`**. Past ten, unsending the
+message takes the text and leaves the extra files downloadable. This is not
+mentioned in any doc outside the OpenAPI spec, and it is a limit on the feature
+this repo exists to explore.
+
+`packMedia` reports it via `overflow` rather than truncating. The honest options,
+none of them free:
+
+- **Cap the composer at ten** — simplest, a visible product limit.
+- **Split past ten into multiple events** — loses the atomicity that motivated a
+  single envelope in the first place.
+- **Send more and accept unrevocable media** — only defensible if the UI says so at
+  send time, which means saying it in a way people ignore.
+
+This repo does not choose. It makes the choice unavoidable.
+
+### Single view needs both halves
+
+The sandbox's single-view walk is a client mechanism. `MediaUploadInitRequest`
+also has **`viewOnce`**, which makes the *server* 410 the second download. Both are
+needed: the flag stops another device fetching the bytes, the walk is what makes
+the first view single. Requesting only the envelope flag gives you a "single-view"
+image that a reinstall can fetch again. `packMedia` sets `viewOnce` on every file
+when single view is requested.
