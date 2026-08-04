@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "media-message",
+    "slug": "impl-expo-meda-message",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.example.implexpomediamessage"
+    },
+    "android": {
+      "package": "org.example.implexpomediamessage",
+      "adaptiveIcon": {
+        "backgroundColor": "#0e1116",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Add real photos and videos to the layout experiment."
+        }
+      ],
+      "expo-video"
+    ]
+  }
+}
